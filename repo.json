@@ -25,7 +25,7 @@
 	"Description": "Mobile or Discord Webhook push notifications for the Party Finder.",
 	"InternalName": "DcNotify",
 	"AssemblyVersion": "1.0.0.7",
-	"IconUrl": "https://i.imgur.com/UfyChWs.png",
+	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/dc.png",
 	"ApplicableVersion": "any",
 	"Tags": [
 		"party-finder",
