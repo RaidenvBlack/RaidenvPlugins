@@ -3,7 +3,7 @@
     	"Author": "Raiden",
 	"Name": "EasyProfitGamble",
 	"Description": "Helper plugin for Blackjack",
-	"InternalName": "GamblePyon",
+	"InternalName": "EasyProfitGamble",
 	"AssemblyVersion": "1.0.3.0",
 	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/gamble.png",
 	"ApplicableVersion": "any",
