@@ -4,13 +4,13 @@
 	"Name": "EasyProfitGamble",
 	"Description": "Helper plugin for Blackjack",
 	"InternalName": "EasyProfitGamble",
-	"AssemblyVersion": "1.0.0.7",
+	"AssemblyVersion": "1.0.0.8",
 	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/gamble.png",
 	"ApplicableVersion": "any",
 	"Tags": [
 		"blackjack", "gamble", "pyon"
 	],
-	"DalamudApiLevel": 9,
+	"DalamudApiLevel": 10,
 	"IsHide": "False",
 	"IsTestingExclusive": "False",
 	"LastUpdated": 0,
