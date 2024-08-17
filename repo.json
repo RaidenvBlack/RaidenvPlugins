@@ -23,7 +23,7 @@
  	"Author": "Raiden",
 	"Name": "DcNotify",
 	"Description": "Mobile or Discord Webhook push notifications for the Party Finder.",
-	"InternalName": "PushyFinder",
+	"InternalName": "DcNotify",
 	"AssemblyVersion": "1.0.1.0",
 	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/dc.png",
 	"ApplicableVersion": "any",
