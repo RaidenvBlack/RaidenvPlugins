@@ -40,6 +40,28 @@
 	"DownloadLinkInstall": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/dcv13.zip",
 	"DownloadLinkTesting": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/dcv13.zip",
 	"DownloadLinkUpdate": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/dcv13.zip"	  
-  }
- 
+  },
+  {
+ 	"Author": "Raiden",
+	"Name": "BlackjackSolver",
+	"Description": "A simple blackjack solver that tells you the best move to make, helps you with bets and customize your calls.",
+	"InternalName": "BlackjackSolver",
+	"AssemblyVersion": "1.0.0.9",
+	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/casino.png",
+	"ApplicableVersion": "any",
+	"Tags": [
+		"bj",
+    		"helper",
+   		"solver", 
+ 		"blackjack"
+	],
+	"DalamudApiLevel": 10,
+	"IsHide": "False",
+	"IsTestingExclusive": "False",
+	"LastUpdated": 0,
+	"DownloadCount": 0,
+	"DownloadLinkInstall": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/BlackjackSolver.zip",
+	"DownloadLinkTesting": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/BlackjackSolver.zip",
+	"DownloadLinkUpdate": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/BlackjackSolver.zip"	  
+   } 
 ]
