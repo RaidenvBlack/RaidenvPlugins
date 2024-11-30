@@ -63,5 +63,28 @@
 	"DownloadLinkInstall": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/BlackjackSolver.zip",
 	"DownloadLinkTesting": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/BlackjackSolver.zip",
 	"DownloadLinkUpdate": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/BlackjackSolver.zip"	  
+   },
+   {
+ 	"Author": "Raiden",
+	"Name": "LazyKindness",
+	"Description": "If you're feeling too lazy to write messages, this tool can help you create customizable 'hello,' 'good game,' and 'goodnight' messages for your FC (Free Company). It's quick, easy, and tailored to your needs!",
+	"InternalName": "LazyKindness",
+	"AssemblyVersion": "1.0.1.0",
+	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/lazy.png",
+	"ApplicableVersion": "any",
+	"Tags": [
+		"lazy",
+    		"kindness",
+   		"helper", 
+ 		"chill"
+	],
+	"DalamudApiLevel": 11,
+	"IsHide": "False",
+	"IsTestingExclusive": "False",
+	"LastUpdated": 0,
+	"DownloadCount": 0,
+	"DownloadLinkInstall": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/Lazy.zip",
+	"DownloadLinkTesting": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/Lazy.zip",
+	"DownloadLinkUpdate": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/Lazy.zip"	  
    } 
 ]
