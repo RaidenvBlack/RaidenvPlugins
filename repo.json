@@ -67,7 +67,7 @@
    {
  	"Author": "Raiden and Sayuri",
 	"Name": "LazyKindness",
-	"Description": "If you're feeling too lazy to write messages, this tool can help you create customizable 'hello,' 'good game,' and 'goodnight' messages for your FC (Free Company). It's quick, easy, and tailored to your needs!",
+	"Description": "Answers for you on hello, gg and Good Night messages! Highly customizable! ",
 	"InternalName": "LazyKindness",
 	"AssemblyVersion": "1.0.1.2",
 	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/lazy.png",
