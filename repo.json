@@ -69,7 +69,7 @@
 	"Name": "LazyKindness",
 	"Description": "Answers for you on hello, gg and Good Night messages! Highly customizable! ",
 	"InternalName": "LazyKindness",
-	"AssemblyVersion": "1.0.1.4",
+	"AssemblyVersion": "1.0.1.5",
 	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/lazy.png",
 	"ApplicableVersion": "any",
 	"Tags": [
