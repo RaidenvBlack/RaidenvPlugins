@@ -10,7 +10,7 @@
 	"Tags": [
 		"blackjack", "gamble", "pyon"
 	],
-	"DalamudApiLevel": 11,
+	"DalamudApiLevel": 12,
 	"IsHide": "False",
 	"IsTestingExclusive": "False",
 	"LastUpdated": 0,
@@ -32,7 +32,7 @@
       		"afk", 
       		"notifications"
 	],
-	"DalamudApiLevel": 11,
+	"DalamudApiLevel": 12,
 	"IsHide": "False",
 	"IsTestingExclusive": "False",
 	"LastUpdated": 0,
@@ -55,7 +55,7 @@
    		"solver", 
  		"blackjack"
 	],
-	"DalamudApiLevel": 11,
+	"DalamudApiLevel": 12,
 	"IsHide": "False",
 	"IsTestingExclusive": "False",
 	"LastUpdated": 0,
@@ -78,7 +78,7 @@
    		"helper", 
  		"chill"
 	],
-	"DalamudApiLevel": 11,
+	"DalamudApiLevel": 12,
 	"IsHide": "False",
 	"IsTestingExclusive": "False",
 	"LastUpdated": 0,
