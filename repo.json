@@ -86,5 +86,29 @@
 	"DownloadLinkInstall": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/Lazy.zip",
 	"DownloadLinkTesting": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/Lazy.zip",
 	"DownloadLinkUpdate": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/Lazy.zip"	  
+   },
+   {
+ 	"Author": "Raiden",
+	"Name": "ZeroTweaks",
+	"Description": "Tweaks that are already working: Loot Roll Tracker, ChatGPT, Mare switcher",
+	"InternalName": "ZeroTweaks",
+	"AssemblyVersion": "1.0.2.0",
+	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/zero.png",
+	"ApplicableVersion": "any",
+	"Tags": [
+		"zero",
+    		"tweaks",
+   		"helper", 
+ 		"loot",
+		"tracker"
+	],
+	"DalamudApiLevel": 12,
+	"IsHide": "False",
+	"IsTestingExclusive": "True",
+	"LastUpdated": 0,
+	"DownloadCount": 69,
+	"DownloadLinkInstall": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/zero.zip",
+	"DownloadLinkTesting": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/zero.zip",
+	"DownloadLinkUpdate": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/zero.zip"	  
    } 
 ]
