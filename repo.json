@@ -92,7 +92,7 @@
 	"Name": "ZeroTweaks",
 	"Description": "Tweaks that are already working: Loot Roll Tracker, ChatGPT, Mare switcher",
 	"InternalName": "ZeroTweaks",
-	"AssemblyVersion": "1.0.2.0",
+	"AssemblyVersion": "1.0.3.0",
 	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/zero.png",
 	"ApplicableVersion": "any",
 	"Tags": [
@@ -102,7 +102,7 @@
  		"loot",
 		"tracker"
 	],
-	"DalamudApiLevel": 12,
+	"DalamudApiLevel": 13,
 	"IsHide": "False",
 	"IsTestingExclusive": "True",
 	"LastUpdated": 0,
