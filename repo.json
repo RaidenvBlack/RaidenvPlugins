@@ -24,7 +24,7 @@
 	"Name": "DcNotify",
 	"Description": "Mobile or Discord Webhook push notifications for the Party Finder.",
 	"InternalName": "DcNotify",
-	"AssemblyVersion": "1.0.1.4",
+	"AssemblyVersion": "1.0.1.5",
 	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/dc.png",
 	"ApplicableVersion": "any",
 	"Tags": [
@@ -32,7 +32,7 @@
       		"afk", 
       		"notifications"
 	],
-	"DalamudApiLevel": 12,
+	"DalamudApiLevel": 13,
 	"IsHide": "False",
 	"IsTestingExclusive": "False",
 	"LastUpdated": 0,
