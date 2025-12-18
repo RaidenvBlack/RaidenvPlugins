@@ -4,13 +4,13 @@
 	"Name": "EasyProfitGamble",
 	"Description": "Helper plugin for Blackjack",
 	"InternalName": "GamblePyon",
-	"AssemblyVersion": "1.0.2.0",
+	"AssemblyVersion": "1.0.2.1",
 	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/gamble.png",
 	"ApplicableVersion": "any",
 	"Tags": [
 		"blackjack", "gamble", "pyon"
 	],
-	"DalamudApiLevel": 13,
+	"DalamudApiLevel": 14,
 	"IsHide": "False",
 	"IsTestingExclusive": "False",
 	"LastUpdated": 0,
@@ -46,7 +46,7 @@
 	"Name": "BlackjackSolver",
 	"Description": "A simple blackjack solver that tells you the best move to make, helps you with bets and customize your calls.",
 	"InternalName": "BlackjackSolver",
-	"AssemblyVersion": "1.0.2.0",
+	"AssemblyVersion": "1.0.2.1",
 	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/casino.png",
 	"ApplicableVersion": "any",
 	"Tags": [
@@ -55,7 +55,7 @@
    		"solver", 
  		"blackjack"
 	],
-	"DalamudApiLevel": 13,
+	"DalamudApiLevel": 14,
 	"IsHide": "False",
 	"IsTestingExclusive": "False",
 	"LastUpdated": 0,
