@@ -104,7 +104,7 @@
 	],
 	"DalamudApiLevel": 15,
 	"IsHide": "False",
-	"IsTestingExclusive": "True",
+	"IsTestingExclusive": "False",
 	"LastUpdated": 0,
 	"DownloadCount": 69,
 	"DownloadLinkInstall": "https://raw.githubusercontent.com//RaidenvBlack/RaidenvPlugins/main/zero.zip",
