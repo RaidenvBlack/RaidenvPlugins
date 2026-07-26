@@ -102,7 +102,7 @@
  		"loot",
 		"tracker"
 	],
-	"DalamudApiLevel": 14,
+	"DalamudApiLevel": 15,
 	"IsHide": "False",
 	"IsTestingExclusive": "True",
 	"LastUpdated": 0,
