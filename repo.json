@@ -90,7 +90,7 @@
    {
  	"Author": "Raiden",
 	"Name": "ZeroTweaks",
-	"Description": "Tweaks that are already working: Loot Roll Tracker, ChatGPT, Mare switcher",
+	"Description": "Tweaks that are already working: Loot Roll Tracker, ChatGPT, Lightless switcher",
 	"InternalName": "ZeroTweaks",
 	"AssemblyVersion": "1.0.3.5",
 	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/zero.png",
