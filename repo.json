@@ -92,7 +92,7 @@
 	"Name": "ZeroTweaks",
 	"Description": "Tweaks that are already working: Loot Roll Tracker, ChatGPT, Lightless switcher",
 	"InternalName": "ZeroTweaks",
-	"AssemblyVersion": "1.0.3.6",
+	"AssemblyVersion": "1.0.3.7",
 	"IconUrl": "https://raw.githubusercontent.com/RaidenvBlack/RaidenvPlugins/main/icons/zero.png",
 	"ApplicableVersion": "any",
 	"Tags": [
