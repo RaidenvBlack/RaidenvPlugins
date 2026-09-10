@@ -154,14 +154,14 @@ runs:
         PROJECT_PATH: ${{ steps.prepare.outputs.project-path }}
       run: |
         $ErrorActionPreference = 'Stop'
-        $restore = @('restore', $env:PROJECT_PATH)
+        $restore = @('restore', $env:PROJECT_PATH, '--arch', 'x64')
         if (-not [string]::IsNullOrWhiteSpace($env:LOCK_FILE)) {
           $restore += '--locked-mode'
         }
         & dotnet @restore
         if ($LASTEXITCODE -ne 0) { throw "dotnet restore failed with exit code $LASTEXITCODE." }
 
-        & dotnet build $env:PROJECT_PATH --configuration Release --no-restore -p:ContinuousIntegrationBuild=true
+        & dotnet build $env:PROJECT_PATH --configuration Release --arch x64 --no-restore -p:ContinuousIntegrationBuild=true
         if ($LASTEXITCODE -ne 0) { throw "dotnet build failed with exit code $LASTEXITCODE." }
 
     - name: Run configured plugin tests
@@ -171,10 +171,30 @@ runs:
         TEST_PROJECTS: ${{ inputs.test-projects }}
       run: |
         $ErrorActionPreference = 'Stop'
+        $dalamudDirectory = Join-Path $env:APPDATA 'XIVLauncher\addon\Hooks\dev'
         foreach ($testProject in $env:TEST_PROJECTS.Split(';', [System.StringSplitOptions]::RemoveEmptyEntries)) {
           $path = $testProject.Trim()
+          Write-Host "Building $path"
+          & dotnet build $path --configuration Release --arch x64
+          if ($LASTEXITCODE -ne 0) { throw "Test project '$path' failed to build with exit code $LASTEXITCODE." }
+
+          # Console smoke tests reference the plugin project, whose Dalamud SDK
+          # references intentionally are not copied locally. Supply the same
+          # official development assemblies used by the plugin build.
+          $testName = [IO.Path]::GetFileNameWithoutExtension($path)
+          $testRoot = Join-Path (Split-Path -Parent $path) 'bin\x64\Release'
+          $testAssembly = Get-ChildItem -LiteralPath $testRoot -Filter "$testName.dll" -File -Recurse |
+            Where-Object { $_.FullName -notmatch '[\\/]ref[\\/]' } |
+            Sort-Object LastWriteTimeUtc -Descending |
+            Select-Object -First 1
+          if ($null -eq $testAssembly) {
+            throw "Could not locate the compiled test assembly '$testName.dll' below '$testRoot'."
+          }
+          Get-ChildItem -LiteralPath $dalamudDirectory -Filter '*.dll' -File |
+            Copy-Item -Destination $testAssembly.DirectoryName -Force
+
           Write-Host "Running $path"
-          & dotnet run --project $path --configuration Release --arch x64
+          & dotnet run --project $path --configuration Release --arch x64 --no-build
           if ($LASTEXITCODE -ne 0) { throw "Test project '$path' failed with exit code $LASTEXITCODE." }
         }
 
@@ -202,6 +222,16 @@ runs:
         name: ${{ inputs.internal-name }}-${{ steps.package.outputs.version }}
         path: ${{ steps.package.outputs.package-path }}
         retention-days: 14
+
+    - name: Require central repository credential
+      if: inputs.publish == 'true'
+      shell: pwsh
+      env:
+        CENTRAL_REPO_TOKEN: ${{ inputs.central-repo-token }}
+      run: |
+        if ([string]::IsNullOrWhiteSpace($env:CENTRAL_REPO_TOKEN)) {
+          throw "CENTRAL_REPO_TOKEN is missing. Add a fine-grained token with Contents: Read and write for the central repository."
+        }
 
     - name: Commit released version to plugin repository
       id: source-commit
@@ -244,16 +274,6 @@ runs:
       shell: pwsh
       run: |
         "sha=$(git rev-parse HEAD)" >> $env:GITHUB_OUTPUT
-
-    - name: Require central repository credential
-      if: inputs.publish == 'true'
-      shell: pwsh
-      env:
-        CENTRAL_REPO_TOKEN: ${{ inputs.central-repo-token }}
-      run: |
-        if ([string]::IsNullOrWhiteSpace($env:CENTRAL_REPO_TOKEN)) {
-          throw "CENTRAL_REPO_TOKEN is missing. Add a fine-grained token with Contents: Read and write for the central repository."
-        }
 
     - name: Check out central plugin repository
       if: inputs.publish == 'true'
