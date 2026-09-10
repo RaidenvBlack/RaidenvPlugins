@@ -120,3 +120,30 @@ jobs:
           $sourceHash = (Get-FileHash -LiteralPath ./BlackjackSolver.zip -Algorithm SHA256).Hash
           $targetHash = (Get-FileHash -LiteralPath (Join-Path $central 'BlackjackSolver.zip') -Algorithm SHA256).Hash
           if ($sourceHash -cne $targetHash) { throw 'Copied ZIP hash changed.' }
+
+          $manifestPath = Join-Path $packageContent 'BlackjackSolver.json'
+          $downgradeManifest = [IO.File]::ReadAllText($manifestPath) | ConvertFrom-Json
+          $downgradeManifest.AssemblyVersion = '1.0.0.0'
+          [IO.File]::WriteAllText(
+            $manifestPath,
+            ($downgradeManifest | ConvertTo-Json -Depth 100)
+          )
+          $downgradeRejected = $false
+          try {
+            & ./.github/actions/dalamud-release/scripts/Update-Repository.ps1 `
+              -RepositoryPath $central `
+              -MetadataPath repo.json `
+              -PackagePath (Resolve-Path ./BlackjackSolver.zip).Path `
+              -PackageManifestPath $manifestPath `
+              -CentralRepository RaidenvBlack/RaidenvPlugins `
+              -CentralBranch main `
+              -InternalName BlackjackSolver `
+              -ZipName BlackjackSolver.zip
+          } catch {
+            if ($_.Exception.Message -like 'Refusing to downgrade*') {
+              $downgradeRejected = $true
+            } else {
+              throw
+            }
+          }
+          if (-not $downgradeRejected) { throw 'A central version downgrade was not rejected.' }

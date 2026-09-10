@@ -256,6 +256,7 @@ runs:
         VERSION: ${{ steps.package.outputs.version }}
       run: |
         $ErrorActionPreference = 'Stop'
+        $sourceSha = (git rev-parse HEAD).Trim()
         git config user.name 'github-actions[bot]'
         git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
         git add -- $env:PROJECT_PATH
@@ -270,15 +271,52 @@ runs:
         if ($LASTEXITCODE -eq 1) {
           git commit -m "chore(release): version $env:VERSION [skip ci]"
           if ($LASTEXITCODE -ne 0) { throw 'Could not commit the plugin version.' }
-          git push origin "HEAD:$env:SOURCE_BRANCH"
-          if ($LASTEXITCODE -ne 0) {
-            throw 'Could not push the version commit. A newer source push or branch protection may have intervened.'
+
+          & git fetch origin "refs/heads/$($env:SOURCE_BRANCH):refs/remotes/origin/$($env:SOURCE_BRANCH)"
+          if ($LASTEXITCODE -ne 0) { throw "Could not refresh source branch '$env:SOURCE_BRANCH'." }
+          $remoteRef = "refs/remotes/origin/$($env:SOURCE_BRANCH)"
+          $remoteSha = (git rev-parse $remoteRef).Trim()
+
+          if ($remoteSha -eq $sourceSha) {
+            git push origin "HEAD:$env:SOURCE_BRANCH"
+            if ($LASTEXITCODE -ne 0) {
+              throw 'Could not push the version commit. A newer source push or branch protection may have intervened.'
+            }
+            $releasedSha = (git rev-parse HEAD).Trim()
+          } else {
+            & git merge-base --is-ancestor $sourceSha $remoteSha
+            if ($LASTEXITCODE -ne 0) {
+              throw 'The source branch no longer descends from the commit being released.'
+            }
+
+            $remoteProjectSpec = "$remoteRef`:$($env:PROJECT_PATH)"
+            $remoteProjectText = (& git show $remoteProjectSpec) -join "`n"
+            if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the project version on the source branch.' }
+            $remoteVersionMatches = [regex]::Matches(
+              $remoteProjectText,
+              '<Version>\s*([^<\s]+)\s*</Version>',
+              [Text.RegularExpressions.RegexOptions]::IgnoreCase
+            )
+            if ($remoteVersionMatches.Count -ne 1) {
+              throw 'Could not uniquely determine the project version on the source branch.'
+            }
+            $remoteVersion = $remoteVersionMatches[0].Groups[1].Value
+            if ($remoteVersion -ne $env:VERSION) {
+              throw "A newer source push intervened and has version '$remoteVersion', not '$env:VERSION'."
+            }
+
+            # A previous attempt already pushed this version and then failed
+            # while updating the central repository. Reuse it on the rerun.
+            Write-Host "Source branch already contains released version $env:VERSION at $remoteSha."
+            $releasedSha = $remoteSha
           }
         } elseif ($LASTEXITCODE -ne 0) {
           throw 'Could not inspect staged version changes.'
+        } else {
+          $releasedSha = $sourceSha
         }
 
-        "sha=$(git rev-parse HEAD)" >> $env:GITHUB_OUTPUT
+        "sha=$releasedSha" >> $env:GITHUB_OUTPUT
 
     - name: Record validation source commit
       id: validation-commit

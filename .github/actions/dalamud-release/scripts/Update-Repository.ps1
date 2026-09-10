@@ -72,6 +72,16 @@ if ($matches.Count -eq 0) {
     if ([string] $entry.Name -cne [string] $packageManifest.Name) {
         Write-Warning "Preserving central Name '$($entry.Name)' instead of package Name '$($packageManifest.Name)'."
     }
+
+    try {
+        $centralVersion = [Version]::Parse([string] $entry.AssemblyVersion)
+        $packageVersion = [Version]::Parse([string] $packageManifest.AssemblyVersion)
+    } catch {
+        throw "Could not compare central and packaged AssemblyVersion values: $($_.Exception.Message)"
+    }
+    if ($packageVersion -lt $centralVersion) {
+        throw "Refusing to downgrade $InternalName from $centralVersion to $packageVersion."
+    }
 }
 
 $refPath = if ($CentralBranch.Contains('/')) { "refs/heads/$CentralBranch" } else { $CentralBranch }
