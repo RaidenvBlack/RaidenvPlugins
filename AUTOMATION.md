@@ -14,7 +14,8 @@ The reusable workflow delegates the implementation to the composite action in
 
 The release sequence is:
 
-1. Check out the exact source ref.
+1. Check out the exact event commit (or the released tag), never a moving branch
+   tip.
 2. Detect and validate the project, manifest, target framework, Dalamud SDK,
    Dalamud API level, and DalamudPackager configuration.
 3. For a publishing run, calculate the requested version increment in memory.
@@ -28,6 +29,7 @@ The release sequence is:
 7. Upload the validated ZIP as a workflow artifact, even for validation-only
    runs.
 8. For a publishing run, commit the version files back to the source branch.
+   A rerun recognizes an identical version commit from an earlier partial run.
 9. Check out this central repository, replace the plugin ZIP, update only the
    release-managed fields in `repo.json`, validate the result, commit, and push.
 
@@ -116,7 +118,8 @@ Dalamud plugin**, choose **Run workflow**, and select the default branch.
 - Choose `none` to rebuild the exact version, such as for a GitHub release tag.
 
 Publishing a GitHub Release also builds the released tag with `bump: none` and
-updates this repository after all validations pass.
+updates this repository after all validations pass. The central updater rejects
+version downgrades, so publishing an older tag cannot roll the repository back.
 
 ## Failed runs
 
@@ -124,8 +127,9 @@ Open **Actions**, select the failed run, inspect the failed step, and choose
 **Re-run failed jobs** after correcting the cause. Common failures are reported
 explicitly: restore/build/test errors, missing `latest.zip`, inconsistent
 versions or API levels, malformed manifests, missing credentials, and a central
-push race. A push race is safe to rerun because the ZIP and metadata update are
-idempotent.
+push race. A push race is safe to rerun because the exact original source commit
+is built again, an already-pushed source version is reused, and the ZIP/metadata
+update is idempotent.
 
 If branch protection is enabled later, allow GitHub Actions to write the version
 commit or change the release process to a version-bump pull request. The current
@@ -151,6 +155,11 @@ Download URLs use the canonical raw GitHub URL for the configured central
 branch. The workflow verifies the copied ZIP hash and reparses `repo.json`
 before it commits anything.
 
+`.github/workflows/dalamud-automation-test.yml` checks PATCH calculation,
+source-manifest consistency, preservation of non-release metadata, canonical
+download links, ZIP hashes, and downgrade rejection on every relevant central
+pull request.
+
 ## Managed repositories
 
 | Plugin | Source repository | Default branch after setup | Project | Central ZIP |
@@ -162,4 +171,3 @@ before it commits anything.
 `EasyProfitGamble` and `DcNotify` remain unmanaged because no corresponding
 source repository is available to the connected GitHub account. Their ZIPs and
 metadata are left untouched.
-
