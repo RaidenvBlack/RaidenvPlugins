@@ -1,0 +1,344 @@
+name: Automated Dalamud release
+description: Build, validate, package, version, and publish one Dalamud plugin.
+
+inputs:
+  project-path:
+    description: Path to the Dalamud plugin project (.csproj).
+    required: true
+  manifest-path:
+    description: Optional path to the source plugin manifest. Auto-detected when omitted.
+    required: false
+    default: ""
+  internal-name:
+    description: Dalamud InternalName and assembly name.
+    required: true
+  zip-name:
+    description: Final ZIP file name in the central repository.
+    required: true
+  source-ref:
+    description: Branch, tag, or commit to check out.
+    required: true
+  source-branch:
+    description: Branch that receives an automatic version commit.
+    required: false
+    default: ""
+  bump:
+    description: Version increment (patch, minor, major, or none).
+    required: false
+    default: patch
+  publish:
+    description: Whether to commit the version and publish to the central repository.
+    required: false
+    default: "false"
+  dotnet-version:
+    description: setup-dotnet channel, or auto to derive it from the target framework.
+    required: false
+    default: auto
+  test-projects:
+    description: Semicolon-separated console test project paths.
+    required: false
+    default: ""
+  central-repository:
+    description: Central repository in owner/name form.
+    required: false
+    default: RaidenvBlack/RaidenvPlugins
+  central-branch:
+    description: Branch to update in the central repository.
+    required: false
+    default: main
+  metadata-path:
+    description: Path to the Dalamud custom-repository JSON file.
+    required: false
+    default: repo.json
+  github-token:
+    description: Caller repository GITHUB_TOKEN.
+    required: true
+  central-repo-token:
+    description: Fine-grained token restricted to the central repository.
+    required: false
+    default: ""
+
+outputs:
+  version:
+    description: Version embedded in the validated package.
+    value: ${{ steps.package.outputs.version }}
+  dalamud-api-level:
+    description: Dalamud API level embedded in the validated package.
+    value: ${{ steps.package.outputs.api-level }}
+  package-sha256:
+    description: SHA-256 digest of the final plugin ZIP.
+    value: ${{ steps.package.outputs.sha256 }}
+  source-commit:
+    description: Source commit containing the released version.
+    value: ${{ steps.source-commit.outputs.sha || steps.validation-commit.outputs.sha }}
+
+runs:
+  using: composite
+  steps:
+    - name: Validate action inputs
+      shell: pwsh
+      env:
+        BUMP: ${{ inputs.bump }}
+        CENTRAL_REPOSITORY: ${{ inputs.central-repository }}
+        INTERNAL_NAME: ${{ inputs.internal-name }}
+        PUBLISH: ${{ inputs.publish }}
+        SOURCE_BRANCH: ${{ inputs.source-branch }}
+        ZIP_NAME: ${{ inputs.zip-name }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        if ($env:BUMP -notin @('patch', 'minor', 'major', 'none')) {
+          throw "bump must be patch, minor, major, or none (received '$env:BUMP')."
+        }
+        if ($env:PUBLISH -notin @('true', 'false')) {
+          throw "publish must be true or false (received '$env:PUBLISH')."
+        }
+        if ($env:ZIP_NAME -notmatch '^[^\\/:*?\"<>|]+\.zip$') {
+          throw "zip-name must be a plain .zip filename without path characters."
+        }
+        if ($env:INTERNAL_NAME -notmatch '^[A-Za-z0-9._-]+$') {
+          throw "internal-name contains unsupported characters."
+        }
+        if ($env:CENTRAL_REPOSITORY -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
+          throw "central-repository must use owner/name format."
+        }
+        if ($env:PUBLISH -eq 'true' -and $env:BUMP -ne 'none' -and [string]::IsNullOrWhiteSpace($env:SOURCE_BRANCH)) {
+          throw "source-branch is required when publishing a version bump."
+        }
+
+    - name: Check out plugin source
+      uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      with:
+        fetch-depth: 0
+        persist-credentials: ${{ inputs.publish }}
+        ref: ${{ inputs.source-ref }}
+        token: ${{ inputs.github-token }}
+
+    - name: Determine and prepare version
+      id: prepare
+      shell: pwsh
+      env:
+        BUMP: ${{ inputs.bump }}
+        DOTNET_VERSION: ${{ inputs.dotnet-version }}
+        MANIFEST_PATH: ${{ inputs.manifest-path }}
+        PROJECT_PATH: ${{ inputs.project-path }}
+        PUBLISH: ${{ inputs.publish }}
+      run: |
+        & "$env:GITHUB_ACTION_PATH/scripts/Prepare-Version.ps1" `
+          -ProjectPath $env:PROJECT_PATH `
+          -ManifestPath $env:MANIFEST_PATH `
+          -Bump $env:BUMP `
+          -ApplyVersionChange ($env:PUBLISH -eq 'true') `
+          -DotnetVersion $env:DOTNET_VERSION
+
+    - name: Install .NET
+      uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+      with:
+        dotnet-version: ${{ steps.prepare.outputs.dotnet-version }}
+
+    - name: Download official Dalamud development files
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $archive = Join-Path $env:RUNNER_TEMP 'dalamud-latest.zip'
+        $target = Join-Path $env:APPDATA 'XIVLauncher\addon\Hooks\dev'
+        Invoke-WebRequest -Uri 'https://goatcorp.github.io/dalamud-distrib/latest.zip' -OutFile $archive
+        if ((Get-Item $archive).Length -lt 1MB) {
+          throw 'The downloaded Dalamud archive is unexpectedly small.'
+        }
+        Expand-Archive -LiteralPath $archive -DestinationPath $target -Force
+
+    - name: Restore and build plugin
+      shell: pwsh
+      env:
+        LOCK_FILE: ${{ steps.prepare.outputs.lock-file }}
+        PROJECT_PATH: ${{ steps.prepare.outputs.project-path }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        $restore = @('restore', $env:PROJECT_PATH)
+        if (-not [string]::IsNullOrWhiteSpace($env:LOCK_FILE)) {
+          $restore += '--locked-mode'
+        }
+        & dotnet @restore
+        if ($LASTEXITCODE -ne 0) { throw "dotnet restore failed with exit code $LASTEXITCODE." }
+
+        & dotnet build $env:PROJECT_PATH --configuration Release --no-restore -p:ContinuousIntegrationBuild=true
+        if ($LASTEXITCODE -ne 0) { throw "dotnet build failed with exit code $LASTEXITCODE." }
+
+    - name: Run configured plugin tests
+      if: inputs.test-projects != ''
+      shell: pwsh
+      env:
+        TEST_PROJECTS: ${{ inputs.test-projects }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        foreach ($testProject in $env:TEST_PROJECTS.Split(';', [System.StringSplitOptions]::RemoveEmptyEntries)) {
+          $path = $testProject.Trim()
+          Write-Host "Running $path"
+          & dotnet run --project $path --configuration Release --arch x64
+          if ($LASTEXITCODE -ne 0) { throw "Test project '$path' failed with exit code $LASTEXITCODE." }
+        }
+
+    - name: Validate and stage package
+      id: package
+      shell: pwsh
+      env:
+        EXPECTED_API_LEVEL: ${{ steps.prepare.outputs.api-level }}
+        EXPECTED_VERSION: ${{ steps.prepare.outputs.version }}
+        INTERNAL_NAME: ${{ inputs.internal-name }}
+        PROJECT_PATH: ${{ steps.prepare.outputs.project-path }}
+        ZIP_NAME: ${{ inputs.zip-name }}
+      run: |
+        & "$env:GITHUB_ACTION_PATH/scripts/Validate-Package.ps1" `
+          -ProjectPath $env:PROJECT_PATH `
+          -InternalName $env:INTERNAL_NAME `
+          -ZipName $env:ZIP_NAME `
+          -ExpectedVersion $env:EXPECTED_VERSION `
+          -ExpectedApiLevel $env:EXPECTED_API_LEVEL
+
+    - name: Upload validated plugin ZIP
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      with:
+        if-no-files-found: error
+        name: ${{ inputs.internal-name }}-${{ steps.package.outputs.version }}
+        path: ${{ steps.package.outputs.package-path }}
+        retention-days: 14
+
+    - name: Commit released version to plugin repository
+      id: source-commit
+      if: inputs.publish == 'true'
+      shell: pwsh
+      env:
+        MANIFEST_PATH: ${{ steps.prepare.outputs.manifest-path }}
+        PROJECT_PATH: ${{ steps.prepare.outputs.project-path }}
+        SOURCE_BRANCH: ${{ inputs.source-branch }}
+        VERSION: ${{ steps.package.outputs.version }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        git config user.name 'github-actions[bot]'
+        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+        git add -- $env:PROJECT_PATH
+        if (-not [string]::IsNullOrWhiteSpace($env:MANIFEST_PATH)) {
+          git add -- $env:MANIFEST_PATH
+        }
+
+        git diff --cached --check
+        if ($LASTEXITCODE -ne 0) { throw 'Version changes failed git diff --check.' }
+
+        git diff --cached --quiet
+        if ($LASTEXITCODE -eq 1) {
+          git commit -m "chore(release): version $env:VERSION [skip ci]"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not commit the plugin version.' }
+          git push origin "HEAD:$env:SOURCE_BRANCH"
+          if ($LASTEXITCODE -ne 0) {
+            throw 'Could not push the version commit. A newer source push or branch protection may have intervened.'
+          }
+        } elseif ($LASTEXITCODE -ne 0) {
+          throw 'Could not inspect staged version changes.'
+        }
+
+        "sha=$(git rev-parse HEAD)" >> $env:GITHUB_OUTPUT
+
+    - name: Record validation source commit
+      id: validation-commit
+      if: inputs.publish != 'true'
+      shell: pwsh
+      run: |
+        "sha=$(git rev-parse HEAD)" >> $env:GITHUB_OUTPUT
+
+    - name: Require central repository credential
+      if: inputs.publish == 'true'
+      shell: pwsh
+      env:
+        CENTRAL_REPO_TOKEN: ${{ inputs.central-repo-token }}
+      run: |
+        if ([string]::IsNullOrWhiteSpace($env:CENTRAL_REPO_TOKEN)) {
+          throw "CENTRAL_REPO_TOKEN is missing. Add a fine-grained token with Contents: Read and write for the central repository."
+        }
+
+    - name: Check out central plugin repository
+      if: inputs.publish == 'true'
+      uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      with:
+        fetch-depth: 0
+        path: .release/central-repository
+        persist-credentials: true
+        ref: ${{ inputs.central-branch }}
+        repository: ${{ inputs.central-repository }}
+        token: ${{ inputs.central-repo-token }}
+
+    - name: Update central ZIP and metadata
+      if: inputs.publish == 'true'
+      shell: pwsh
+      env:
+        CENTRAL_BRANCH: ${{ inputs.central-branch }}
+        CENTRAL_REPOSITORY: ${{ inputs.central-repository }}
+        INTERNAL_NAME: ${{ inputs.internal-name }}
+        METADATA_PATH: ${{ inputs.metadata-path }}
+        PACKAGE_MANIFEST: ${{ steps.package.outputs.manifest-path }}
+        PACKAGE_PATH: ${{ steps.package.outputs.package-path }}
+        ZIP_NAME: ${{ inputs.zip-name }}
+      run: |
+        & "$env:GITHUB_ACTION_PATH/scripts/Update-Repository.ps1" `
+          -RepositoryPath (Join-Path $env:GITHUB_WORKSPACE '.release/central-repository') `
+          -MetadataPath $env:METADATA_PATH `
+          -PackagePath $env:PACKAGE_PATH `
+          -PackageManifestPath $env:PACKAGE_MANIFEST `
+          -CentralRepository $env:CENTRAL_REPOSITORY `
+          -CentralBranch $env:CENTRAL_BRANCH `
+          -InternalName $env:INTERNAL_NAME `
+          -ZipName $env:ZIP_NAME
+
+    - name: Commit central repository update
+      if: inputs.publish == 'true'
+      shell: pwsh
+      working-directory: .release/central-repository
+      env:
+        CENTRAL_BRANCH: ${{ inputs.central-branch }}
+        INTERNAL_NAME: ${{ inputs.internal-name }}
+        METADATA_PATH: ${{ inputs.metadata-path }}
+        VERSION: ${{ steps.package.outputs.version }}
+        ZIP_NAME: ${{ inputs.zip-name }}
+      run: |
+        $ErrorActionPreference = 'Stop'
+        git config user.name 'github-actions[bot]'
+        git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+        git add -- $env:ZIP_NAME $env:METADATA_PATH
+        git diff --cached --check
+        if ($LASTEXITCODE -ne 0) { throw 'Central repository changes failed git diff --check.' }
+
+        git diff --cached --quiet
+        if ($LASTEXITCODE -eq 0) {
+          Write-Host 'Central repository is already up to date.'
+          exit 0
+        }
+        if ($LASTEXITCODE -ne 1) { throw 'Could not inspect central repository changes.' }
+
+        git commit -m "chore(repo): publish $env:INTERNAL_NAME $env:VERSION [skip ci]"
+        if ($LASTEXITCODE -ne 0) { throw 'Could not commit the central repository update.' }
+        git push origin "HEAD:$env:CENTRAL_BRANCH"
+        if ($LASTEXITCODE -ne 0) {
+          throw 'Could not push the central repository update. Another plugin release may have updated it first; rerun this workflow.'
+        }
+
+    - name: Write release summary
+      if: always() && steps.package.outcome == 'success'
+      shell: pwsh
+      env:
+        API_LEVEL: ${{ steps.package.outputs.api-level }}
+        CENTRAL_BRANCH: ${{ inputs.central-branch }}
+        CENTRAL_REPOSITORY: ${{ inputs.central-repository }}
+        PACKAGE_SHA: ${{ steps.package.outputs.sha256 }}
+        PUBLISH: ${{ inputs.publish }}
+        VERSION: ${{ steps.package.outputs.version }}
+        ZIP_NAME: ${{ inputs.zip-name }}
+      run: |
+        @"
+        ## Dalamud package
+
+        - Version: ``$env:VERSION``
+        - Dalamud API: ``$env:API_LEVEL``
+        - ZIP: ``$env:ZIP_NAME``
+        - SHA-256: ``$env:PACKAGE_SHA``
+        - Publish requested: ``$env:PUBLISH``
+        - Target: ``$env:CENTRAL_REPOSITORY@$env:CENTRAL_BRANCH``
+        "@ >> $env:GITHUB_STEP_SUMMARY
