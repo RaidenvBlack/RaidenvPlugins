@@ -162,11 +162,16 @@ pull request.
 
 ## Managed repositories
 
-| Plugin | Source repository | Default branch after setup | Project | Central ZIP |
-|---|---|---|---|---|
-| BlackjackSolver | `RaidenvBlack/BlackjackSolver` | `master` | `BlackjackSolver/BlackjackSolver.csproj` | `BlackjackSolver.zip` |
-| LazyKindness | `RaidenvBlack/LazyKindness` | `master` | `LazyKindness/LazyKindness.csproj` | `Lazy.zip` |
-| ZeroTweaks | `RaidenvBlack/Zero-Tweaks` | `main` | `ZeroTweaks/ZeroTweaks.csproj` | `zero.zip` |
+| Plugin | Setup source → default | Baseline | .NET / API | Extra validation | Central ZIP |
+|---|---|---|---|---|---|
+| BlackjackSolver | `new1.6.2` → `master` | `1.6.2.0` | .NET 10 / API 15 | 34 recognition + 6 replay tests | `BlackjackSolver.zip` |
+| LazyKindness | `Api15` → `master` | `1.0.3.5` | .NET 10 / API 15 | package validation | `Lazy.zip` |
+| ZeroTweaks | `newnewera` → `main` | `1.1.0.10` | .NET 10 / API 15 | parser smoke test | `zero.zip` |
+
+All three projects use `Dalamud.NET.Sdk/15.0.0`, its existing
+DalamudPackager integration, and committed NuGet lock files. No project has a
+`global.json` or shared `Directory.Build.props`, so the workflow derives the
+.NET SDK channel directly from each target framework.
 
 `EasyProfitGamble` and `DcNotify` remain unmanaged because no corresponding
 source repository is available to the connected GitHub account. Their ZIPs and
