@@ -190,8 +190,20 @@ runs:
           if ($null -eq $testAssembly) {
             throw "Could not locate the compiled test assembly '$testName.dll' below '$testRoot'."
           }
-          Get-ChildItem -LiteralPath $dalamudDirectory -Filter '*.dll' -File |
+          $dalamudAssembly = Get-ChildItem -LiteralPath $dalamudDirectory -Filter 'Dalamud.dll' -File -Recurse |
+            Sort-Object LastWriteTimeUtc -Descending |
+            Select-Object -First 1
+          if ($null -eq $dalamudAssembly) {
+            throw "The official development archive does not contain Dalamud.dll below '$dalamudDirectory'."
+          }
+          Get-ChildItem -LiteralPath $dalamudAssembly.DirectoryName -Filter '*.dll' -File |
             Copy-Item -Destination $testAssembly.DirectoryName -Force
+          $copiedDalamud = Join-Path $testAssembly.DirectoryName 'Dalamud.dll'
+          if (-not (Test-Path -LiteralPath $copiedDalamud)) {
+            throw "Could not stage Dalamud.dll beside '$($testAssembly.FullName)'."
+          }
+          $dalamudVersion = [Reflection.AssemblyName]::GetAssemblyName($copiedDalamud).Version
+          Write-Host "Using Dalamud $dalamudVersion from $($dalamudAssembly.DirectoryName)"
 
           Write-Host "Running $path"
           & dotnet $testAssembly.FullName
