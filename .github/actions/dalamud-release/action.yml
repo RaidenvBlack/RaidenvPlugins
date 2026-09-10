@@ -154,14 +154,14 @@ runs:
         PROJECT_PATH: ${{ steps.prepare.outputs.project-path }}
       run: |
         $ErrorActionPreference = 'Stop'
-        $restore = @('restore', $env:PROJECT_PATH, '--arch', 'x64')
+        $restore = @('restore', $env:PROJECT_PATH)
         if (-not [string]::IsNullOrWhiteSpace($env:LOCK_FILE)) {
           $restore += '--locked-mode'
         }
         & dotnet @restore
         if ($LASTEXITCODE -ne 0) { throw "dotnet restore failed with exit code $LASTEXITCODE." }
 
-        & dotnet build $env:PROJECT_PATH --configuration Release --arch x64 --no-restore -p:ContinuousIntegrationBuild=true
+        & dotnet build $env:PROJECT_PATH --configuration Release --no-restore -p:Platform=x64 -p:ContinuousIntegrationBuild=true
         if ($LASTEXITCODE -ne 0) { throw "dotnet build failed with exit code $LASTEXITCODE." }
 
     - name: Run configured plugin tests
@@ -175,7 +175,7 @@ runs:
         foreach ($testProject in $env:TEST_PROJECTS.Split(';', [System.StringSplitOptions]::RemoveEmptyEntries)) {
           $path = $testProject.Trim()
           Write-Host "Building $path"
-          & dotnet build $path --configuration Release --arch x64
+          & dotnet build $path --configuration Release -p:Platform=x64
           if ($LASTEXITCODE -ne 0) { throw "Test project '$path' failed to build with exit code $LASTEXITCODE." }
 
           # Console smoke tests reference the plugin project, whose Dalamud SDK
@@ -194,7 +194,7 @@ runs:
             Copy-Item -Destination $testAssembly.DirectoryName -Force
 
           Write-Host "Running $path"
-          & dotnet run --project $path --configuration Release --arch x64 --no-build
+          & dotnet $testAssembly.FullName
           if ($LASTEXITCODE -ne 0) { throw "Test project '$path' failed with exit code $LASTEXITCODE." }
         }
 
