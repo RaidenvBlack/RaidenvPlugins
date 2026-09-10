@@ -98,7 +98,7 @@ jobs:
     steps:
       - name: Run shared Dalamud release action
         id: release
-        uses: RaidenvBlack/RaidenvPlugins/.github/actions/dalamud-release@3066ecf035373e2a8759f07046297d3a9e36b58f
+        uses: RaidenvBlack/RaidenvPlugins/.github/actions/dalamud-release@6b3ba8c7af49563afb7a09dd173531143cab8e0f
         with:
           bump: ${{ inputs.bump }}
           central-branch: ${{ inputs.central-branch }}
@@ -130,7 +130,7 @@ jobs:
     steps:
       - name: Run shared Dalamud release action
         id: release
-        uses: RaidenvBlack/RaidenvPlugins/.github/actions/dalamud-release@3066ecf035373e2a8759f07046297d3a9e36b58f
+        uses: RaidenvBlack/RaidenvPlugins/.github/actions/dalamud-release@6b3ba8c7af49563afb7a09dd173531143cab8e0f
         with:
           bump: ${{ inputs.bump }}
           central-branch: ${{ inputs.central-branch }}
