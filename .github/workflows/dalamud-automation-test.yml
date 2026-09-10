@@ -3,7 +3,7 @@ name: Test Dalamud release automation
 on:
   push:
     branches:
-      - automation/dalamud-release
+      - main
     paths:
       - .github/actions/dalamud-release/**
       - .github/workflows/dalamud-automation-test.yml
