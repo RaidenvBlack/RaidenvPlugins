@@ -1,0 +1,149 @@
+name: Reusable Dalamud Release
+
+on:
+  workflow_call:
+    inputs:
+      project-path:
+        description: Path to the Dalamud plugin project (.csproj).
+        required: true
+        type: string
+      manifest-path:
+        description: Optional source manifest path; auto-detected when omitted.
+        required: false
+        type: string
+        default: ""
+      internal-name:
+        description: Dalamud InternalName and assembly name.
+        required: true
+        type: string
+      zip-name:
+        description: Final ZIP name in the central repository.
+        required: true
+        type: string
+      source-ref:
+        description: Branch, tag, or commit to build.
+        required: true
+        type: string
+      source-branch:
+        description: Branch that receives the automatic version commit.
+        required: false
+        type: string
+        default: ""
+      bump:
+        description: Version increment (patch, minor, major, or none).
+        required: false
+        type: string
+        default: patch
+      publish:
+        description: Commit the version and update the central repository.
+        required: false
+        type: boolean
+        default: false
+      dotnet-version:
+        description: setup-dotnet channel, or auto to derive it from the project.
+        required: false
+        type: string
+        default: auto
+      test-projects:
+        description: Semicolon-separated console test project paths.
+        required: false
+        type: string
+        default: ""
+      central-repository:
+        description: Central repository in owner/name form.
+        required: false
+        type: string
+        default: RaidenvBlack/RaidenvPlugins
+      central-branch:
+        description: Branch to update in the central repository.
+        required: false
+        type: string
+        default: main
+      metadata-path:
+        description: Dalamud custom-repository JSON path.
+        required: false
+        type: string
+        default: repo.json
+    secrets:
+      CENTRAL_REPO_TOKEN:
+        description: Fine-grained token with Contents read/write on the central repository.
+        required: false
+    outputs:
+      version:
+        description: Version embedded in the validated package.
+        value: ${{ jobs.publish.outputs.version || jobs.validate.outputs.version }}
+      dalamud-api-level:
+        description: Dalamud API level embedded in the validated package.
+        value: ${{ jobs.publish.outputs.dalamud-api-level || jobs.validate.outputs.dalamud-api-level }}
+      package-sha256:
+        description: SHA-256 digest of the validated plugin ZIP.
+        value: ${{ jobs.publish.outputs.package-sha256 || jobs.validate.outputs.package-sha256 }}
+
+concurrency:
+  group: dalamud-release-${{ github.repository }}-${{ inputs.source-branch || inputs.source-ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: inputs.publish != true
+    name: Build and validate
+    runs-on: windows-2022
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      dalamud-api-level: ${{ steps.release.outputs.dalamud-api-level }}
+      package-sha256: ${{ steps.release.outputs.package-sha256 }}
+    steps:
+      - name: Run shared Dalamud release action
+        id: release
+        uses: RaidenvBlack/RaidenvPlugins/.github/actions/dalamud-release@b6093647bfa24bf90d875f82b16edd85f925ac0d
+        with:
+          bump: ${{ inputs.bump }}
+          central-branch: ${{ inputs.central-branch }}
+          central-repo-token: ${{ secrets.CENTRAL_REPO_TOKEN }}
+          central-repository: ${{ inputs.central-repository }}
+          dotnet-version: ${{ inputs.dotnet-version }}
+          github-token: ${{ github.token }}
+          internal-name: ${{ inputs.internal-name }}
+          manifest-path: ${{ inputs.manifest-path }}
+          metadata-path: ${{ inputs.metadata-path }}
+          project-path: ${{ inputs.project-path }}
+          publish: ${{ inputs.publish }}
+          source-branch: ${{ inputs.source-branch }}
+          source-ref: ${{ inputs.source-ref }}
+          test-projects: ${{ inputs.test-projects }}
+          zip-name: ${{ inputs.zip-name }}
+
+  publish:
+    if: inputs.publish == true
+    name: Build, validate, and publish
+    runs-on: windows-2022
+    timeout-minutes: 35
+    permissions:
+      contents: write
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      dalamud-api-level: ${{ steps.release.outputs.dalamud-api-level }}
+      package-sha256: ${{ steps.release.outputs.package-sha256 }}
+    steps:
+      - name: Run shared Dalamud release action
+        id: release
+        uses: RaidenvBlack/RaidenvPlugins/.github/actions/dalamud-release@b6093647bfa24bf90d875f82b16edd85f925ac0d
+        with:
+          bump: ${{ inputs.bump }}
+          central-branch: ${{ inputs.central-branch }}
+          central-repo-token: ${{ secrets.CENTRAL_REPO_TOKEN }}
+          central-repository: ${{ inputs.central-repository }}
+          dotnet-version: ${{ inputs.dotnet-version }}
+          github-token: ${{ github.token }}
+          internal-name: ${{ inputs.internal-name }}
+          manifest-path: ${{ inputs.manifest-path }}
+          metadata-path: ${{ inputs.metadata-path }}
+          project-path: ${{ inputs.project-path }}
+          publish: ${{ inputs.publish }}
+          source-branch: ${{ inputs.source-branch }}
+          source-ref: ${{ inputs.source-ref }}
+          test-projects: ${{ inputs.test-projects }}
+          zip-name: ${{ inputs.zip-name }}
